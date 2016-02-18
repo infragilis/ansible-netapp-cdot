@@ -1,0 +1,15 @@
+---
+OPENSTACK_TENANT_NAME: ansibletest
+subnet: 172.199.204.0/27
+gateway: 172.199.204.1
+DataAggr: data_aggr_node1
+domain: ansible.com
+dnsip: 10.78.128.13,10.78.128.40
+node1: KC6220-2240-01
+node2: KC6220-2240-02
+vlan: 1111
+lif: e1b
+svmip: 172.199.204.2
+netmask: 255.255.255.224
+VolumeName1: infra
+SizeVol1: 100g
