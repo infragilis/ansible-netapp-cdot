@@ -1,0 +1,41 @@
+
+
+---
+- hosts: filers
+  gather_facts: no
+  vars_files:
+    - vars.yml
+  tasks:
+  - name: ipspace_create
+    raw:  network ipspace create {{ OPENSTACK_TENANT_NAME }}_ipspace
+  - name: broadcast_domain_create
+    raw: broadcast-domain create -broadcast-domain {{ OPENSTACK_TENANT_NAME }} -mtu 9000 -ipspace {{ OPENSTACK_TENANT_NAME }}_ipspace
+  - name: subnet_create
+    raw: subnet create -subnet-name {{ OPENSTACK_TENANT_NAME }} -broadcast-domain {{ OPENSTACK_TENANT_NAME }} -subnet {{ subnet }} -ipspace {{ OPENSTACK_TENANT_NAME }}_ipspace -gateway {{ gateway }}
+  - name: vserver_create
+    raw: vserver create -vserver {{ OPENSTACK_TENANT_NAME }} -subtype default -rootvolume {{ OPENSTACK_TENANT_NAME }}_root -aggregate {{ DataAggr }} -rootvolume-security-style unix  -language C.UTF-8 -snapshot-policy default -ipspace {{ OPENSTACK_TENANT_NAME }}_ipspace
+  - name: vserver_modify
+    raw: vol modify -vserver {{ OPENSTACK_TENANT_NAME }} -volume {{ OPENSTACK_TENANT_NAME }}_root -autosize true
+  - name: vserver_set_dns
+    raw: vserver services dns create -vserver {{ OPENSTACK_TENANT_NAME }} -domains {{ domain }} -name-servers {{ dnsip }} -state enabled -timeout 2 -attempts 1
+  - name: vserver_remove_protocols
+    raw: vserver remove-protocols -vserver {{ OPENSTACK_TENANT_NAME }} -protocols cifs,fcp,iscsi,ndmp
+  - name: vserver_enable_nfs
+    raw: vserver nfs on -vserver {{ OPENSTACK_TENANT_NAME }}
+  - name: vserver_enable_showmount
+    raw: vserver nfs modify  -vserver {{ OPENSTACK_TENANT_NAME }} -showmount enabled
+  - name: vserver_fsid_change
+    raw: set diag; nfs modify -vserver {{ OPENSTACK_TENANT_NAME }} -v3-fsid-change disabled
+  - name: vlan_create node1
+    raw: vlan create -node {{ node1 }} -vlan-name {{ lif }}-{{ vlan }}
+  - name: vlan_create node2
+    raw: vlan create -node {{ node2 }} -vlan-name {{ lif }}-{{ vlan }}
+  - name: add_ports_br_domain_node1
+    raw: broadcast-domain add-ports -broadcast-domain {{ OPENSTACK_TENANT_NAME }} -ports {{node1}}:{{ lif }}-{{ vlan }}  -ipspace {{ OPENSTACK_TENANT_NAME }}_ipspace
+  - name: add_ports_br_domain_node2
+    raw: broadcast-domain add-ports -broadcast-domain {{ OPENSTACK_TENANT_NAME }} -ports {{node2}}:{{ lif }}-{{ vlan }}  -ipspace {{ OPENSTACK_TENANT_NAME }}_ipspace
+  - name: create_svm_nic
+    raw: network interface create -vserver {{ OPENSTACK_TENANT_NAME }} -lif {{ OPENSTACK_TENANT_NAME }}-{{vlan}} -role data -data-protocol nfs -home-node {{ node1 }} -home-port {{lif}}-{{vlan}} -address {{svmip}} -netmask {{netmask}} -status-admin up -failover-policy system-defined -firewall-policy data -auto-revert true  -force-subnet-association
+  - name: infra_vol_create
+    raw: vol create -vserver {{ OPENSTACK_TENANT_NAME }} -volume {{ VolumeName1 }} -aggregate data_aggr_node1 -size {{ SizeVol1 }}
+
