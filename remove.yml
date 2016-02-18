@@ -1,0 +1,31 @@
+
+
+---
+- hosts: filers
+  gather_facts: no
+  vars_files:
+    - vars.yml
+  tasks:
+  - name: infra_vol_offline
+    raw: set diag; volume offline -vserver {{ OPENSTACK_TENANT_NAME }} -volume {{ VolumeName1 }} -foreground true -force true
+  - name: infra_vol_destroy
+    raw: set diag; volume delete -vserver {{ OPENSTACK_TENANT_NAME }} -volume {{ VolumeName1 }} -foreground true
+  - name: vserver stop
+    raw: vserver stop -vserver {{ OPENSTACK_TENANT_NAME }}
+  - name: vserver_root_offline
+    raw: set diag; volume offline -vserver {{ OPENSTACK_TENANT_NAME }} -volume {{ OPENSTACK_TENANT_NAME }}_root -foreground true -force true
+  - name: vserver_root_destroy
+    raw: set diag; volume delete -vserver {{ OPENSTACK_TENANT_NAME }} -volume {{ OPENSTACK_TENANT_NAME }}_root -foreground true
+  - name: vserver_destroy
+    raw: set diag; vserver delete {{ OPENSTACK_TENANT_NAME }}
+  - name: subnet_delete
+    raw: subnet delete -subnet-name {{ OPENSTACK_TENANT_NAME }} -ipspace {{ OPENSTACK_TENANT_NAME }}_ipspace
+  - name: broadcast_domain_delete
+    raw: broadcast-domain delete -broadcast-domain {{ OPENSTACK_TENANT_NAME }} -ipspace {{ OPENSTACK_TENANT_NAME }}_ipspace
+  - name: ipspace_remove
+    raw:  network ipspace delete {{ OPENSTACK_TENANT_NAME }}_ipspace
+  - name: vlan_node_1_remove
+    raw: vlan delete -node {{node1}} -vlan-name {{lif}}-{{vlan}}
+  - name: vlan_node_2_remove
+    raw: vlan delete -node {{node2}} -vlan-name {{lif}}-{{vlan}}
+
