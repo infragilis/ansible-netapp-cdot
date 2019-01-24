@@ -1,0 +1,33 @@
+############################################
+# boonstra@netapp.com / 2019
+# global/private vars are in vars.yml
+# playbook specific vars are down below
+#############################################
+netapp_hostname: "172.30.3.100"
+netapp_username: "ansible"
+netapp_password: "xxx"
+vserver: ansible_test
+# address is the to_be_created SVM ip
+address_nfs: 172.30.3.25
+address_iscsi: 172.30.3.26
+address_cifs: 172.30.3.27
+aggrname: data_aggr
+state: present
+volname: test_vol
+dest_vol: test_vol_dest
+igroup_name: iscsi-test_group
+lun_name: iscsi_test_ansible
+qtree_name: qt_quickstart
+share_name: sh_quickstart
+group_name: Administrators
+permission: full_control
+new_size: 40
+#cifs_domain variables
+cifs_user: Administrator
+cifs_pass: xxx
+cifs_server_name: cifs_svm
+cifs_domain: ad.local
+domain: ad.local
+#comma separate multiple dns
+dns: "192.1.1.10"
+ntp_server: "pool.ntp.org"

@@ -1,0 +1,49 @@
+############################################
+# boonstra@netapp.com / 2018
+# global/private vars are in vars.yml
+# playbook specific vars are down below
+#############################################
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+   vars.yml
+  vars:
+    volname: "{{ volname }}"
+    vserver: "{{ vserver }}"
+    aggr: data_aggr
+    policy: ansiblePolicy
+    state: present
+  name: create_lun_all
+  tasks:
+   - name: create_igroup 
+     na_ontap_igroup:
+          state: present
+          name: "{{ igroup_name }}"
+          initiator_group_type: iscsi
+          ostype: linux
+          initiator: iqn.1994-05.com.redhat:scspa0395855001.rtp.openenglab.netapp.com
+          vserver: "{{ vserver }}"
+          hostname: "{{ netapp_hostname }}"
+          username: "{{ netapp_username }}"
+          password: "{{ netapp_password }}"
+   - name: create_lun
+     na_ontap_lun:
+          name: "{{ lun_name }}"
+          flexvol_name: "{{ volname }}"
+          size: 5
+          size_unit: gb
+          ostype: linux
+          space_reserve: True
+          vserver: "{{ vserver }}"
+          hostname: "{{ netapp_hostname }}"
+          username: "{{ netapp_username }}"
+          password: "{{ netapp_password }}"
+   - name: lun_map
+     na_ontap_lun_map:
+          initiator_group_name: "{{ igroup_name }}"
+          path:  /vol/{{ volname }}/{{ lun_name }}
+          vserver: "{{ vserver }}"
+          hostname: "{{ netapp_hostname }}"
+          username: "{{ netapp_username }}"
+          password: "{{ netapp_password }}"

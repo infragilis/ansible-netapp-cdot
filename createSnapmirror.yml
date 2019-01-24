@@ -1,0 +1,31 @@
+############################################
+# boonstra@netapp.com / 2018
+# global/private vars are in vars.yml
+# playbook specific vars are down below
+# remaining vars are send via curl/tower api call
+# curl -H "Content-Type: application/json" -X POST -s -u admin:netapp -d '{ "extra_vars": { "volname": "src_vol", "aggrname": "data_aggr", "state": "present"}}' -k https://172.30.3.51/api/v2/job_templates/7/launch/
+# this playbook assumes that the source and destination volume exists.
+#############################################
+---
+- hosts: localhost
+  name: Setup ONTAP
+  vars_files:
+   /var/lib/awx/projects/entergy/vars.yml
+  vars:
+    volname: "{{ volname }}"
+    vserver: "{{ vserver }}"
+    aggrname: " {{ aggrname }}"
+    policy: ansiblePolicy
+    state: "{{ state }}"
+  tasks:
+  - name: Create snapmirror
+    na_ontap_snapmirror:
+      state: present
+      source_volume: "{{ volname }}"
+      destination_volume: "{{ dest_vol }}"
+      source_vserver: "{{ vserver }}"
+      schedule: 8hour
+      destination_vserver: "{{ vserver_dest }}"
+      hostname: "{{ netapp_hostname_dest }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"

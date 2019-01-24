@@ -1,0 +1,126 @@
+############################################
+# boonstra@netapp.com / 2019
+# global/private vars are in vars.yml
+# playbook specific vars are down below
+#############################################
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+   vars.yml
+  vars:
+    login: &login
+      hostname: "{{ netapp_hostname }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+  name: Onboard SVM
+  tasks:
+  - name: Create SVM
+    na_ontap_svm:
+      state: present
+      name: "{{ vserver }}"
+      root_volume: "{{ vserver}}_root"
+      root_volume_aggregate: "{{ aggrname }}"
+      root_volume_security_style: unix
+      <<: *login
+  - name: Create interface NFS
+    na_ontap_interface:
+      state: present
+      interface_name: "{{ vserver }}_nfs_data_1"
+      home_port: e0c
+      home_node: select1-01
+      role: data
+      protocols: nfs
+      admin_status: up
+      failover_policy: local-only
+      firewall_policy: data
+      is_auto_revert: true
+      address: "{{ address_nfs }}"
+      netmask: 255.255.255.0
+      vserver: "{{ vserver }}"
+      <<: *login
+  - name: Create interface CIFS
+    na_ontap_interface:
+      state: present
+      interface_name: "{{ vserver }}_cifs_data_1"
+      home_port: e0c
+      home_node: select1-01
+      role: data
+      protocols: cifs
+      admin_status: up
+      failover_policy: local-only
+      firewall_policy: data
+      is_auto_revert: true
+      address: "{{ address_cifs }}"
+      netmask: 255.255.255.0
+      vserver: "{{ vserver }}"
+      <<: *login 
+  - name: Create NTP server
+    na_ontap_ntp:
+      state: present
+      version: auto
+      server_name: "{{ ntp_server }}"
+      <<: *login
+  - name: create DNS
+    na_ontap_dns:
+     state: present
+     vserver:  "{{ vserver }}"
+     domains: "{{ domain }}"
+     nameservers: "{{ dns }}"
+     <<: *login 
+  - name: Create interface ISCSI
+    na_ontap_interface:
+      state: present
+      interface_name: "{{ vserver }}_iscsi_data_1"
+      home_port: e0c
+      home_node: select1-01
+      role: data
+      protocols: iscsi
+      admin_status: up
+      firewall_policy: data
+      address: "{{ address_iscsi }}"
+      netmask: 255.255.255.0
+      vserver: "{{ vserver }}"
+      <<: *login
+  - name: change nfs status
+    na_ontap_nfs:
+      state: present
+      service_state: started
+      vserver: "{{ vserver }}"
+      nfsv3: enabled
+      nfsv4: disabled
+      nfsv41: disabled
+      tcp: enabled
+      udp: enabled
+      vstorage_state: disabled
+      <<: *login
+  - name: change ISCSI status
+    na_ontap_iscsi:
+      state: present
+      service_state: started
+      vserver: "{{ vserver }}"
+      <<: *login  
+  - name: Create cifs_server
+    na_ontap_cifs_server:
+      state: present
+      vserver: "{{ vserver }}"
+      admin_user_name: "{{ cifs_user }}"
+      admin_password: "{{ cifs_pass }}"
+      cifs_server_name: "{{ cifs_server_name }}"
+      domain: "{{ cifs_domain }}"
+      service_state: started
+      hostname: "{{ netapp_hostname }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+  - name: Setup default rules
+    na_ontap_export_policy_rule:
+      state: present
+      policy_name: default
+      vserver: "{{ vserver }}"
+      client_match: 0.0.0.0/0
+      ro_rule: any
+      rw_rule: none
+      super_user_security: none
+      <<: *login

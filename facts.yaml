@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  name: Setup ONTAP
+  vars_files:
+   vars.yml
+  vars:
+  tasks:
+  - name: Get facts
+    na_ontap_gather_facts:
+      hostname: "{{ netapp_hostname }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+  - debug:
+      var: ontap_facts 

@@ -1,0 +1,18 @@
+---
+- hosts: localhost
+  name: Setup ONTAPi vserver peering
+  vars_files:
+   /var/lib/awx/projects/entergy/vars.yml
+  vars:
+  tasks:
+  - name: Source vserver peer create
+    na_ontap_vserver_peer:
+      state: present
+      peer_vserver: destination_vserver_name
+      peer_cluster: destination_cluster_name
+      vserver: "{{ vserver }}"
+      applications: snapmirror
+      hostname: "{{ netapp_hostname }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      dest_hostname: destination_cluster_name

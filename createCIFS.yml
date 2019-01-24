@@ -1,0 +1,58 @@
+############################################
+# boonstra@netapp.com / 2019
+# global/private vars are in vars.yml
+# playbook specific vars are down below
+#############################################
+# The everyone group, gets no_access by default, see below
+#############################################
+--- 
+- hosts: localhost 
+  name: create_cifs_share 
+  gather_facts: false
+  vars_files:
+   vars.yml
+  vars:
+    volname: "{{ volname }}"
+    vserver:  "{{ vserver }}"
+    aggrname: " {{ aggrname }}" 
+    policy: "{{ volname }}_policy"
+    state: "{{ state }}" 
+  tasks: 
+     - name: Create QTree
+       na_ontap_qtree:
+        state: present
+        name: "{{ qtree_name }}"
+        flexvol_name: "{{ volname }}"
+        vserver: "{{ vserver }}"
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+     - name: Create share
+       na_ontap_cifs:
+        state: present
+        share_name: "{{ share_name }}"
+        path: "/{{ volname }}/{{ qtree_name}}"
+        vserver: "{{ vserver }}" 
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}" 
+     - name: Create CIFS share acl
+       na_ontap_cifs_acl:
+        state: present
+        share_name: "{{ share_name }}"
+        user_or_group: "{{ group_name }}"
+        permission: "{{ permission }}"
+        vserver: "{{ vserver }}"
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+     - name: Create CIFS share acl
+       na_ontap_cifs_acl:
+        state: present 
+        share_name: "{{ share_name }}"
+        user_or_group: Everyone
+        permission: no_access
+        vserver: "{{ vserver }}"
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}" 
